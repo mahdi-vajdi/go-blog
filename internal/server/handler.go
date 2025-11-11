@@ -21,7 +21,7 @@ func NewAPIServer(listenAddr string, store store.Store) *APIServer {
 	}
 }
 
-func (s *APIServer) Run() error {
+func (s *APIServer) routes() http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("POST /posts", s.handleCreatePost)
@@ -30,9 +30,14 @@ func (s *APIServer) Run() error {
 	mux.HandleFunc("PUT /posts/{ID}", s.handleUpdatePost)
 	mux.HandleFunc("DELETE /posts/{ID}", s.handleDeletePost)
 
-	log.Println("Starting server on port", s.listenAddr)
+	return LoggingMiddleware(mux)
+}
 
-	return http.ListenAndServe(s.listenAddr, mux)
+func (s *APIServer) Run() error {
+	handler := s.routes()
+
+	log.Println("Starting server on port", s.listenAddr)
+	return http.ListenAndServe(s.listenAddr, handler)
 }
 
 func (s *APIServer) handleCreatePost(w http.ResponseWriter, r *http.Request) {
