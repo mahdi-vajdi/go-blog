@@ -7,9 +7,17 @@ import (
 )
 
 func main() {
-	memoryStore := store.NewMemoryStore()
+	postgresStore, err := store.NewPostgresStore("postgresql://mahdi:mahdi@localhost:5432/go_blog")
+	if err != nil {
+		log.Fatalf("Failed to connect to the postgres database: %v", err)
+	}
 
-	apiServer := server.NewAPIServer(":8080", memoryStore)
+	if err := postgresStore.Init(); err != nil {
+		log.Fatalf("Failed to initialize the database: %v", err)
+	}
+	log.Println("Database connection successful and tables initialized.")
+
+	apiServer := server.NewAPIServer(":8080", postgresStore)
 	if err := apiServer.Run(); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
